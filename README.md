@@ -23,9 +23,7 @@ docker-compose up
 
 # Bootstrap Users And Groups
 
-When you first run the application only one user exists. This user, with root privileges, must bootstrap all other users and groups into the system.
-
-Get an access token for the `root` user and store it:
+When you first run the application only one user exists. This user, with root privileges, must bootstrap all other users and groups into the system. To begin this process we must get an access token for the `root` user and store it:
 
 ```bash
 ACCESS_TOKEN=`curl -X POST \
