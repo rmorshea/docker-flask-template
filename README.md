@@ -21,9 +21,13 @@ Run the application (images will take time to download the first time):
 docker-compose up
 ```
 
+# Available Endpoints
+
+Once the application is running see [localhost:80/apidocs](http://localhost:80/apidocs) for api details.
+
 # Bootstrap Users And Groups
 
-When you first run the application only one user exists. This user, with root privileges, must bootstrap all other users and groups into the system. To begin this process we must get an access token for the `root` user and store it:
+When you first run the application only one user exists. This user, with root privileges, must bootstrap all other users and groups into the system. To begin this process we must get an access token for the `root` user and store it (you'll need the `ROOT_USER_PASSWORD` environment variable to run this):
 
 ```bash
 ACCESS_TOKEN=`curl -X POST \
@@ -51,7 +55,3 @@ curl -X POST \
 -d '{"username":"admin", "password":"secret", "group":"admin"}' \
 http://localhost:80/user/create
 ```
-
-# Available Endpoints
-
-Once the application is running see [localhost:80/apidocs](http://localhost:80/apidocs) for api details.
