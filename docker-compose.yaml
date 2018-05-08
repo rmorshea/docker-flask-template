@@ -1,0 +1,39 @@
+version: '3'
+services:
+    flask:
+        build: ./flask
+        depends_on:
+            - redis
+            - postgres
+        environment:
+            - REDIS_HOST=redis
+            - REDIS_PORT=6379
+            - ROOT_USER_PASSWORD=${ROOT_USER_PASSWORD}
+            - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+            - POSTGRES_USER=docker
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            - POSTGRES_DB=db
+            - POSTGRES_PORT=5432
+        volumes:
+            - ./flask:/flask
+            - /tmp/docker.sock:/tmp
+    nginx:
+        build: ./nginx
+        ports:
+            - 80:80
+        depends_on:
+            - flask
+        volumes:
+            - /tmp/docker.sock:/tmp
+    postgres:
+        image: postgres
+        environment:
+            - POSTGRES_USER=docker
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            - POSTGRES_DB=db
+        ports:
+            - "5432:5432"
+        volumes:
+            - /var/lib/postgresql
+    redis:
+        image: redis
