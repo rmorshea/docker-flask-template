@@ -1,0 +1,9 @@
+arrow
+flask
+flasgger
+flask-sqlalchemy
+flask-jwt-extended
+psycopg2
+uwsgi
+werkzeug
+redis
