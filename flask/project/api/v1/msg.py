@@ -3,7 +3,9 @@ from werkzeug.exceptions import HTTPException
 
 
 def response(http_status_code, **data):
-    return jsonify(data), http_status_code
+    r = jsonify(data)
+    r.status_code = http_status_code
+    return r
 
 
 class Status(HTTPException):

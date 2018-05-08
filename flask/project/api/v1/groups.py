@@ -10,6 +10,36 @@ group = Blueprint('group', __name__, url_prefix='/group')
 @group.route('/create', methods=['POST'])
 @authorization
 def create():
+    """
+    create a new user group
+    ---
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: a name for the group
+                level:
+                  type: integer
+                  description: the access level of the group (higher number - lower access)
+                manager:
+                  type: string
+                  description: the name of a group which will manage the new one
+      - name: authorization
+        in: header
+        schema:
+          type: string
+          example: Bearer YOUR-TOKEN
+        required: true
+        description: an access token from a user who can manage the new group
+    """
     name = request.json['name']
     level = request.json['level']
     manager = request.json['manager']
@@ -26,6 +56,30 @@ def create():
 @group.route('/delete', methods=['POST'])
 @authorization
 def delete():
+    """
+    delete a new user group
+    ---
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: the name of the group
+      - name: authorization
+        in: header
+        schema:
+          type: string
+          example: Bearer YOUR-TOKEN
+        required: true
+        description: an access token from a user who manages the group
+    """
     name = request.json['name']
     group = Group.get(name)
     if not group:

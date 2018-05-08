@@ -23,38 +23,73 @@ def save(response):
 @decorate.arguments('endpoint, start, stop, humanize')
 def get(endpoint=None, start:arrow.get=None, stop:arrow.get=None, humanize:int=0):
     """
+    get logs for application endpoints.
     ---
     parameters:
       - name: endpoint
         in: query
-        type: string
+        schema:
+            type: string
+            example: logs.get
         required: false
         description: route function
-        example: logs.get
       - name: start
         in: query
-        type: string
+        schema:
+          type: string
+          example: 2018-05-08 08:20:34.206335 00:00
         required: false
         description: an ISO formated date or "now"
-        example: 2018-05-08 08:20:34.206335 00:00
       - name: stop
         in: query
-        type: string
+        schema:
+          type: string
+          example: 2018-05-08 08:20:34.206335 00:00
         required: false
         description: an ISO formated date
-        example: 2018-05-08 08:20:34.206335 00:00
       - name: humanize
         in: query
-        type: integer
+        schema:
+            type: integer
+            enum: [0, 1]
+            example: 1
         required: false
         description: whether or not time should be human readable
-        example: 1
       - name: authorization
         in: header
-        type: string
+        schema:
+            type: string
+            example: Bearer YOUR-TOKEN
         required: true
-        description: an access token
-        example: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE1MjU3Njg5MDksIm5iZiI6MTUyNTc2ODkwOSwianRpIjoiY2NiNDRhZjEtOThhYi00NTM5LWEyMTAtOGIwNDhjNmNiMDg2IiwiZXhwIjoxNTI1NzY5ODA5LCJpZGVudGl0eSI6InJvb3QiLCJmcmVzaCI6ZmFsc2UsInR5cGUiOiJhY2Nlc3MifQ.lJ4LjPzPlUQ-DEyXt2qtGtDwD6c3jfeE1eFVVgyZWdE
+        description: an access token from a group with level 1 or 0
+    definitions:
+      EndpointMapping:
+        type: object
+        properties:
+          endpoint:
+            type: array
+            items:
+              $ref: '#/definitions/Log'
+      Log:
+        type: object
+        properties:
+          ip:
+            type: string
+            description: an ip address
+            example: 172.18.0.1
+          time:
+            type: string
+            description: iso formated date
+            example: 2018-05-08 08:20:34.206335 00:00
+          code:
+            type: integer
+            description: response code for the request
+            example: 200
+    responses:
+      200:
+        description: an array or log objects mapped to a corresopnding endpoint function
+        schema:
+          $ref: '#/definitions/EndpointMapping'
     """
     if stop in (None, 'now'):
         stop = arrow.utcnow()
@@ -73,7 +108,7 @@ def get(endpoint=None, start:arrow.get=None, stop:arrow.get=None, humanize:int=0
         if data:
             logs[e] = data
 
-    return jsonify({'logs': logs})
+    return jsonify(logs)
 
 
 def _to_dict(x):
