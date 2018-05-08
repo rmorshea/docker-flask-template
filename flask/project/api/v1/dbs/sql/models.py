@@ -42,9 +42,16 @@ class User(db.Model):
 class Group(db.Model):
 
     name = db.Column(db.String(50), primary_key=True, nullable=False)
+    level = db.Column(db.Integer, nullable=False)
     users = db.relationship('User', back_populates='_group')
     manager = db.Column(db.String(50), db.ForeignKey('group.name'), nullable=True)
     manages = db.relationship('Group')
+
+    def __init__(self, name, manager, level, **kwargs):
+        if manager is not None and not level > self.get(manager).level:
+            form = 'The manager %r cannot manage a level %s group.'
+            raise Unauthorized(form % (manager, level))
+        super().__init__(name=name, manager=manager, level=level, **kwargs)
 
     @classmethod
     def get(cls, name):

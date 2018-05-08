@@ -41,16 +41,14 @@ def token(username, password, kind='access'):
         raise Unauthorized('Invalid username or password.')
 
 
-def authorization(*groups):
+def authorization(*groups, level=None):
     def setup(function):
         @wraps(function)
         def wrapper(*args, **kwargs):
-            authorize(*groups)
+            authorize(*groups, level=level)
             return function(*args, **kwargs)
         return wrapper
-    if not groups:
-        raise ValueError('Provide groups or use as decorator')
-    if any(map(callable, groups)):
+    if level is None and any(map(callable, groups)):
         if len(groups) > 1:
             raise ValueError('To many arguments for decoration.')
         return jwt_required(groups[0])
@@ -59,14 +57,18 @@ def authorization(*groups):
 
 
 @jwt_required
-def authorize(*groups):
+def authorize(*groups, level=None):
     if None in groups:
         raise ValueError('Root user is always authorized.')
     user = User.current()
+    if level is not None and user._group.level > level:
+        form = 'Unauthorized clearance level %s for user %r.'
+        fill = (user._group.level, user.username)
+        raise Unauthorized(form % fill)
     groups = list(_management(groups))
     if groups and user.group not in groups:
         allowed = ', '.join(map(repr, groups))
-        form = 'Only %r grouped users are allowed - %r is in the %r group.'
+        form = 'Only %r grouped users are allowed - %r is of the %r group.'
         fill = (allowed, user.username, user.group)
         raise Unauthorized(form % fill)
 

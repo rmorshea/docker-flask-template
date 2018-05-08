@@ -19,9 +19,43 @@ def save(response):
 
 
 @logs.route('/')
-@authorization('admin')
-@decorate.arguments('endpoint, start, stop, human')
-def get(endpoint=None, start:arrow.get=None, stop:arrow.get=None, human:int=0):
+@authorization(level=1)
+@decorate.arguments('endpoint, start, stop, humanize')
+def get(endpoint=None, start:arrow.get=None, stop:arrow.get=None, humanize:int=0):
+    """
+    ---
+    parameters:
+      - name: endpoint
+        in: query
+        type: string
+        required: false
+        description: route function
+        example: logs.get
+      - name: start
+        in: query
+        type: string
+        required: false
+        description: an ISO formated date or "now"
+        example: 2018-05-08 08:20:34.206335 00:00
+      - name: stop
+        in: query
+        type: string
+        required: false
+        description: an ISO formated date
+        example: 2018-05-08 08:20:34.206335 00:00
+      - name: humanize
+        in: query
+        type: integer
+        required: false
+        description: whether or not time should be human readable
+        example: 1
+      - name: authorization
+        in: header
+        type: string
+        required: true
+        description: an access token
+        example: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE1MjU3Njg5MDksIm5iZiI6MTUyNTc2ODkwOSwianRpIjoiY2NiNDRhZjEtOThhYi00NTM5LWEyMTAtOGIwNDhjNmNiMDg2IiwiZXhwIjoxNTI1NzY5ODA5LCJpZGVudGl0eSI6InJvb3QiLCJmcmVzaCI6ZmFsc2UsInR5cGUiOiJhY2Nlc3MifQ.lJ4LjPzPlUQ-DEyXt2qtGtDwD6c3jfeE1eFVVgyZWdE
+    """
     if stop in (None, 'now'):
         stop = arrow.utcnow()
     if start is None:
@@ -33,7 +67,7 @@ def get(endpoint=None, start:arrow.get=None, stop:arrow.get=None, human:int=0):
     for e in [endpoint] if endpoint else current_app.view_functions:
         data = []
         for result in map(_to_dict, db.zrange('logs:%s' % e, start, stop)):
-            if human:
+            if humanize:
                 result['time'] = arrow.get(result).humanize
             data.append(result)
         if data:

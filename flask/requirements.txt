@@ -1,5 +1,6 @@
 arrow
 flask
+flasgger
 flask-sqlalchemy
 flask-jwt-extended
 psycopg2

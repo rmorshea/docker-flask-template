@@ -23,7 +23,7 @@ def setup(state):
 def create():
     models.db.create_all()
 
-    models.Group.merge(name='root', manager=None)
+    models.Group.merge(name='root', manager=None, level=0)
     # root user bootstraps other all users and groups into system
     models.User.merge(username='root', password=os.environ['ROOT_USER_PASSWORD'], group='root')
 

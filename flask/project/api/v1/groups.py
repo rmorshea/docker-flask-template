@@ -11,13 +11,13 @@ group = Blueprint('group', __name__, url_prefix='/group')
 @authorization
 def create():
     name = request.json['name']
+    level = request.json['level']
     manager = request.json['manager']
-
     if Group.get(name):
         raise Conflict('Group already exists.', creation=False)
     else:
-        authorize(manager)
-        group = Group(name=name, manager=manager)
+        authorize(manager, level=level)
+        group = Group(name=name, level=level, manager=manager)
         db.session.add(group)
         db.session.commit()
         return response(200, creation=True)
@@ -27,7 +27,6 @@ def create():
 @authorization
 def delete():
     name = request.json['name']
-
     group = Group.get(name)
     if not group:
         raise Absent('Group does not exists.', deletion=False)
