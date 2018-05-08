@@ -15,13 +15,13 @@ def create():
     password = request.json['password']
 
     if User.get(username):
-        raise Conflict('User already exists.')
+        raise Conflict('User already exists.', creation=False)
     else:
         authorize(Group.get(group).manager)
-        user = User(username, password)
+        user = User(username=username, password=password, group=group)
         db.session.add(user)
         db.session.commit()
-        return response(200, signup=True)
+        return response(200, creation=True)
 
 
 @user.route('/delete', methods=['POST'])
@@ -32,7 +32,7 @@ def delete():
 
     user = User.get(username)
     if not user:
-        return Absent('User does not exists.')
+        raise Absent('User does not exists.', deletion=False)
     else:
         db.session.delete(user)
         db.session.commit()

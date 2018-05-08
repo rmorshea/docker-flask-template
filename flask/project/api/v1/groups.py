@@ -14,13 +14,13 @@ def create():
     manager = request.json['manager']
 
     if Group.get(name):
-        raise Conflict('Group already exists.')
+        raise Conflict('Group already exists.', creation=False)
     else:
         authorize(manager)
         group = Group(name=name, manager=manager)
         db.session.add(group)
         db.session.commit()
-        return response(200, signup=True)
+        return response(200, creation=True)
 
 
 @group.route('/delete', methods=['POST'])
@@ -30,7 +30,7 @@ def delete():
 
     group = Group.get(name)
     if not group:
-        return Absent('Group does not exists.')
+        raise Absent('Group does not exists.', deletion=False)
     else:
         db.session.delete(group)
         db.session.commit()

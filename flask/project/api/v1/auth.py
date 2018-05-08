@@ -64,7 +64,7 @@ def authorize(*groups):
         raise ValueError('Root user is always authorized.')
     user = User.current()
     groups = list(_management(groups))
-    if user.group not in groups:
+    if groups and user.group not in groups:
         allowed = ', '.join(map(repr, groups))
         form = 'Only %r grouped users are allowed - %r is in the %r group.'
         fill = (allowed, user.username, user.group)

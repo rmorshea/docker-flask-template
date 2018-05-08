@@ -9,12 +9,13 @@ from ...utils import decorate
 logs = Blueprint('logs', __name__, url_prefix='/logs')
 
 
-@logs.before_app_request
-def save():
+@logs.after_app_request
+def save(response):
     now = arrow.utcnow()
     key = 'logs:%s' % request.endpoint
-    name = '%s@%s' % (request.remote_addr, now)
+    name = '%s %s %s' % (request.remote_addr, now, response.status_code)
     db.zadd(key, name, now.timestamp)
+    return response
 
 
 @logs.route('/')
@@ -29,11 +30,9 @@ def get(endpoint=None, start:arrow.get=None, stop:arrow.get=None, human:int=0):
     stop = stop.timestamp
 
     logs = {}
-    def to_dict(x):
-        return dict(zip(('ip', 'time'), str(x).split('@')))
     for e in [endpoint] if endpoint else current_app.view_functions:
         data = []
-        for result in map(to_dict, db.zrange('logs:%s' % e, start, stop)):
+        for result in map(_to_dict, db.zrange('logs:%s' % e, start, stop)):
             if human:
                 result['time'] = arrow.get(result).humanize
             data.append(result)
@@ -41,3 +40,10 @@ def get(endpoint=None, start:arrow.get=None, stop:arrow.get=None, human:int=0):
             logs[e] = data
 
     return jsonify({'logs': logs})
+
+
+def _to_dict(x):
+    args = x.decode('utf-8').split(' ', 2)
+    d = dict(zip(('ip', 'time', 'code'), args))
+    d['code'] = int(d['code'])
+    return d

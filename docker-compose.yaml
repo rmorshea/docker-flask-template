@@ -6,6 +6,7 @@ services:
             - redis
             - postgres
         environment:
+            - DEBUG=${FLASK_DEBUG}
             - REDIS_HOST=redis
             - REDIS_PORT=6379
             - ROOT_USER_PASSWORD=${ROOT_USER_PASSWORD}
@@ -36,4 +37,4 @@ services:
         volumes:
             - /var/lib/postgresql
     redis:
-        image: redis
+        build: ./redis

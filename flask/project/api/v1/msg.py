@@ -1,24 +1,21 @@
 from flask import jsonify
+from werkzeug.exceptions import HTTPException
 
 
 def response(http_status_code, **data):
     return jsonify(data), http_status_code
 
 
-class Status(Exception):
+class Status(HTTPException):
     """Create an http status code"""
 
     def __init_subclass__(cls, code=None):
         if code is not None:
-            cls.http_status_code = code
-        elif not hasattr(cls, 'http_status_code'):
-            raise ValueError('%r has no defined code code' % cls)
+            cls.code = code
 
-    def __init__(self, message):
-        self.message = message
-
-    def payload(self):
-        return jsonify(self.__dict__)
+    def __init__(self, reason, **data):
+        data['reason'] = reason
+        super().__init__(jsonify(data))
 
 
 class Absent(Status, code=400):

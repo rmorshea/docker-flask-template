@@ -70,4 +70,4 @@ class Group(db.Model):
         manager = cls.get(name=name)
         if manager is not None:
             yield manager.name
-            yield from cls.management(manager.name)
+            yield from cls.iter_management(manager.manager)
