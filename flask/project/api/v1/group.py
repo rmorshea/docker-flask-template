@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 
 from .auth import authorization, authorize, token
 from .msg import Conflict, Absent, response
-from .dbs.sql.models import db, Group
+from .dbs.sql import models
 
 group = Blueprint('group', __name__, url_prefix='/group')
 
@@ -20,18 +20,15 @@ def create():
         schema:
           type: object
           properties:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: a name for the group
-                level:
-                  type: integer
-                  description: the access level of the group (higher number - lower access)
-                manager:
-                  type: string
-                  description: the name of a group which will manage the new one
+            name:
+              type: string
+              description: a name for the group
+            level:
+              type: integer
+              description: the access level of the group (higher number - lower access)
+            manager:
+              type: string
+              description: the name of a group which will manage the new one
       - name: authorization
         in: header
         schema:
@@ -43,13 +40,13 @@ def create():
     name = request.json['name']
     level = request.json['level']
     manager = request.json['manager']
-    if Group.get(name):
+    if models.user.Group.get(name):
         raise Conflict('Group already exists.', creation=False)
     else:
         authorize(manager, level=level)
-        group = Group(name=name, level=level, manager=manager)
-        db.session.add(group)
-        db.session.commit()
+        group = models.user.Group(name=name, level=level, manager=manager)
+        models.db.session.add(group)
+        models.db.session.commit()
         return response(200, creation=True)
 
 
@@ -66,12 +63,9 @@ def delete():
         schema:
           type: object
           properties:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: the name of the group
+            name:
+              type: string
+              description: the name of the group
       - name: authorization
         in: header
         schema:
@@ -81,10 +75,10 @@ def delete():
         description: an access token from a user who manages the group
     """
     name = request.json['name']
-    group = Group.get(name)
+    group = models.user.Group.get(name)
     if not group:
         raise Absent('Group does not exists.', deletion=False)
     else:
-        db.session.delete(group)
-        db.session.commit()
+        models.db.session.delete(group)
+        models.db.session.commit()
         return response(200, deletion=True)

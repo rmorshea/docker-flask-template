@@ -12,7 +12,7 @@ from flask_jwt_extended import (
 from werkzeug.security import check_password_hash
 
 from .msg import Unauthorized
-from .dbs.sql.models import User, Group
+from .dbs.sql import models
 
 auth = Blueprint('auth', __name__)
 
@@ -24,7 +24,7 @@ def setup(state):
 
 
 def validate(username, password):
-    user = User.get(username)
+    user = models.user.User.get(username)
     if user is not None:
         return check_password_hash(user.password, password)
     else:
@@ -41,11 +41,11 @@ def token(username, password, kind='access'):
         raise Unauthorized('Invalid username or password.')
 
 
-def authorization(*groups, level=None):
+def authorization(*groups, level=None, managers=False):
     def setup(function):
         @wraps(function)
         def wrapper(*args, **kwargs):
-            authorize(*groups, level=level)
+            authorize(*groups, level=level, managers=managers)
             return function(*args, **kwargs)
         return wrapper
     if level is None and any(map(callable, groups)):
@@ -56,24 +56,45 @@ def authorization(*groups, level=None):
         return setup
 
 
+def is_authorized(*groups, level=None, managers=False):
+    try:
+        authorize(*groups, level=level, managers=managers)
+    except Unauthorized:
+        return False
+    else:
+        return True
+
+
 @jwt_required
-def authorize(*groups, level=None):
+def authorize(*groups, level=None, managers=False):
+    if managers:
+        groups = [models.user.Group.get(g).manager for g in groups]
+        groups = list(filter(lambda g : g is not None, groups))
     if None in groups:
-        raise ValueError('Root user is always authorized.')
-    user = User.current()
-    if level is not None and user._group.level > level:
-        form = 'Unauthorized clearance level %s for user %r.'
-        fill = (user._group.level, user.username)
-        raise Unauthorized(form % fill)
-    groups = list(_management(groups))
-    if groups and user.group not in groups:
-        allowed = ', '.join(map(repr, groups))
-        form = 'Only %r grouped users are allowed - %r is of the %r group.'
-        fill = (allowed, user.username, user.group)
-        raise Unauthorized(form % fill)
+        raise Unauthorized('No user can perform this action.')
+    user = models.user.User.current()
+    if level is not None:
+        for relationship in user.groups:
+            if relationship.group.level <= level:
+                break
+        else:
+            form = 'The user %r cannot access level %r.'
+            raise Unauthorized(form % (user.username, level))
+    if groups:
+        groups = list(_management(groups))
+        for relationship in user.groups:
+            if relationship.group.name in groups:
+                break
+        else:
+            allowed = ', '.join(map(repr, groups))
+            dissallowed = ', '.join(r.group.name for r in user.groups)
+            form = 'Only %r grouped users are allowed - %r is in %r.'
+            fill = (allowed, user.username, dissallowed)
+            raise Unauthorized(form % fill)
+    return True
 
 
 def _management(groups):
     for g in groups:
         yield g
-        yield from Group.management(g)
+        yield from models.user.Group.management(g)

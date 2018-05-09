@@ -1,3 +1,4 @@
+import json
 from flask import jsonify
 from werkzeug.exceptions import HTTPException
 
@@ -17,14 +18,20 @@ class Status(HTTPException):
 
     def __init__(self, reason, **data):
         data['reason'] = reason
-        super().__init__(jsonify(data))
+        self.data = data
+        super().__init__(reason)
+
+    def json(self):
+        response = jsonify(self.data)
+        response.status_code = self.code
+        return response
 
 
 class Absent(Status, code=400):
     """No result exists."""
 
 
-class Conflict(Status, code=400):
+class Conflict(Status, code=409):
     """A result with the given specification already exists."""
 
 

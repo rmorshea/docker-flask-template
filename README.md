@@ -52,6 +52,6 @@ The root user, as a manager of this new `admin` group can add new users to it:
 curl -X POST \
 -H "Content-Type: application/json" \
 -H "Authorization: Bearer $ACCESS_TOKEN" \
--d '{"username":"admin", "password":"secret", "group":"admin"}' \
+-d '{"username":"admin", "password":"secret", "groups":["admin"]}' \
 http://localhost:80/user/create
 ```

@@ -4,6 +4,7 @@ from .auth import authorization, authorize, token
 from .msg import Conflict, Absent, response
 from .dbs.sql.models import db, User, Group
 
+
 user = Blueprint('user', __name__, url_prefix='/user')
 
 

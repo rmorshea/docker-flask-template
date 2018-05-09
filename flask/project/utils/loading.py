@@ -32,7 +32,6 @@ def _iter_packages(include):
     for finder, name, ispkg in pkgutil.walk_packages(search_paths):
         if ispkg:
             fullname = include + '.' + name
-            yield finder.find_module(fullname).load_module(fullname)
             yield from _iter_packages(fullname)
 
 
