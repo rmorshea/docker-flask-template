@@ -1,7 +1,7 @@
 from flask import Blueprint
 
-from .auth import authorization
-from .msg import response
+from .utils.creds import authorization
+from .utils.msg import response
 
 hello = Blueprint('hello', __name__)
 

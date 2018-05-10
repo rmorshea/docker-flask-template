@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required
 from flask import jsonify, request, Blueprint, current_app
 
 from .dbs.redis import db
-from .auth import authorization
+from .utils.creds import authorization
 from ...utils import decorate
 
 logs = Blueprint('logs', __name__, url_prefix='/logs')
@@ -13,7 +13,7 @@ logs = Blueprint('logs', __name__, url_prefix='/logs')
 def save(response):
     now = arrow.utcnow()
     key = 'logs:%s' % request.endpoint
-    name = '%s %s %s' % (request.remote_addr, now, response.status_code)
+    name = '%s %s %s' % (now, request.remote_addr, response.status_code)
     db.zadd(key, name, now.timestamp)
     return response
 
@@ -87,7 +87,7 @@ def get(endpoint=None, start:arrow.get=None, stop:arrow.get=None, humanize:int=0
             example: 200
     responses:
       200:
-        description: an array or log objects mapped to a corresopnding endpoint function
+        description: an array of log objects mapped to a corresopnding endpoint function
         schema:
           $ref: '#/definitions/EndpointMapping'
     """
@@ -113,6 +113,6 @@ def get(endpoint=None, start:arrow.get=None, stop:arrow.get=None, humanize:int=0
 
 def _to_dict(x):
     args = x.decode('utf-8').split(' ', 2)
-    d = dict(zip(('ip', 'time', 'code'), args))
+    d = dict(zip(('time', 'ip', 'code'), args))
     d['code'] = int(d['code'])
     return d

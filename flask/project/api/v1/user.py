@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 
-from .auth import authorization, authorize
-from .msg import Conflict, Absent, response
+from .utils.creds import authorization, authorize
+from .utils.msg import Conflict, Absent, response
 from .dbs.sql import models
 
 user = Blueprint('user', __name__, url_prefix='/user')

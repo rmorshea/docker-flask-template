@@ -3,7 +3,7 @@ from functools import lru_cache
 from flask_jwt_extended import get_current_user
 from werkzeug.security import generate_password_hash
 
-from ....msg import Unauthorized
+from ....utils.msg import Unauthorized
 from . import db
 
 
