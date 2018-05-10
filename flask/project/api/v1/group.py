@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 
-from .auth import authorization, authorize, token
+from .auth import authorization, authorize
 from .msg import Conflict, Absent, response
 from .dbs.sql import models
 
@@ -33,7 +33,7 @@ def create():
         in: header
         schema:
           type: string
-          example: Bearer YOUR-TOKEN
+          example: Bearer <JWT>
         required: true
         description: an access token from a user who can manage the new group
     """
@@ -70,7 +70,7 @@ def delete():
         in: header
         schema:
           type: string
-          example: Bearer YOUR-TOKEN
+          example: Bearer <JWT>
         required: true
         description: an access token from a user who manages the group
     """

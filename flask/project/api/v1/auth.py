@@ -1,26 +1,96 @@
 import os
+from datetime import timedelta
 from functools import wraps
 
-from flask import Blueprint
+from flask import Blueprint, request
 from flask_jwt_extended import (
     JWTManager,
+    get_jti,
+    get_raw_jwt,
     jwt_required,
     create_access_token,
     create_refresh_token,
-    get_jwt_identity,
 )
 from werkzeug.security import check_password_hash
 
-from .msg import Unauthorized
+from .msg import Unauthorized, response
 from .dbs.sql import models
+from .dbs.redis import db as redis
 
+EXPIRATION = timedelta(minutes=15)
+
+jwt = JWTManager()
 auth = Blueprint('auth', __name__)
 
 
 @auth.record
 def setup(state):
     state.app.config['JWT_SECRET_KEY'] = os.environ['JWT_SECRET_KEY']
-    jwt = JWTManager(state.app)
+    state.app.config['JWT_BLACKLIST_ENABLED'] = True
+    state.app.config['JWT_ACCESS_TOKEN_EXPIRES'] = EXPIRATION
+    jwt.init_app(state.app)
+
+
+@jwt.user_loader_callback_loader
+def load_user(username):
+    return models.user.User.get(username)
+
+
+@jwt.token_in_blacklist_loader
+def token_blacklisted(token):
+    state = redis.get('auth.fresh.%s' % token['jti'])
+    return not (state is None or bool(int(state)))
+
+
+@auth.route('/login', methods=['POST'])
+def login():
+    """
+    get a user's access token
+    ---
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            username:
+              type: string
+              description: a name for the user
+            password:
+              type: string
+              description: a password for the user
+    response:
+      '200':
+        type: string
+        description: an access token
+    """
+    token = tokenize(request.json['username'], request.json['password'])
+    redis.set('auth.fresh.%s' % get_jti(token), 1, EXPIRATION * 1.2)
+    return response(201, access=token)
+
+
+@auth.route('/logout', methods=['POST'])
+@jwt_required
+def logout():
+    """
+    log out a user
+    ---
+    parameters:
+      - name: authorization
+        in: header
+        schema:
+          type: string
+          example: Bearer <JWT>
+        required: true
+        description: an access token from a user who can manage the new group
+    response:
+      '200':
+        type: string
+        description: an access token
+    """
+    redis.set('auth.fresh.%s' % get_raw_jwt()['jti'], 0, EXPIRATION * 1.2)
+    return response(200, logout=True)
 
 
 def validate(username, password):
@@ -31,7 +101,7 @@ def validate(username, password):
         return False
 
 
-def token(username, password, kind='access'):
+def tokenize(username, password, kind='access'):
     if validate(username, password):
         if kind == 'access':
             return create_access_token(identity=username)
@@ -41,17 +111,16 @@ def token(username, password, kind='access'):
         raise Unauthorized('Invalid username or password.')
 
 
-def authorization(*groups, level=None, managers=False):
+def authorization(groups=(), level=None, managers=False):
     def setup(function):
         @wraps(function)
         def wrapper(*args, **kwargs):
-            authorize(*groups, level=level, managers=managers)
+            authorize(groups, level=level, managers=managers)
             return function(*args, **kwargs)
         return wrapper
-    if level is None and any(map(callable, groups)):
-        if len(groups) > 1:
-            raise ValueError('To many arguments for decoration.')
-        return jwt_required(groups[0])
+    if callable(groups):
+        function, groups = groups, []
+        return setup(function)
     else:
         return setup
 
@@ -66,7 +135,7 @@ def is_authorized(*groups, level=None, managers=False):
 
 
 @jwt_required
-def authorize(*groups, level=None, managers=False):
+def authorize(groups, level=None, managers=False):
     if managers:
         groups = [models.user.Group.get(g).manager for g in groups]
         groups = list(filter(lambda g : g is not None, groups))

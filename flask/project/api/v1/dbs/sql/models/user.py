@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import get_current_user
 from werkzeug.security import generate_password_hash
 
 from ....msg import Unauthorized
@@ -48,18 +48,8 @@ class User(db.Model):
         return cls.query.filter_by(username=username).first()
 
     @classmethod
-    def merge(cls, **kwargs):
-        new = cls(**kwargs)
-        old = cls.get(new.username)
-        if not old:
-            db.session.merge(new)
-            return new
-        else:
-            return old
-
-    @classmethod
     def current(cls):
-        return cls.get(get_jwt_identity())
+        return get_current_user()
 
 
 class Group(db.Model):
@@ -79,16 +69,6 @@ class Group(db.Model):
     @classmethod
     def get(cls, name):
         return cls.query.filter_by(name=name).first()
-
-    @classmethod
-    def merge(cls, **kwargs):
-        new = cls(**kwargs)
-        old = cls.get(new.name)
-        if not old:
-            db.session.add(new)
-            return new
-        else:
-            return old
 
     @classmethod
     @lru_cache(maxsize=32)

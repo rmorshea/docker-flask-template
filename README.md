@@ -4,18 +4,32 @@ A dockerized template for a flask application written in Python 3.6.
 
 > Before you continue install [Docker](https://docs.docker.com/install/).
 
-# Docker Compose Up
+# Installation
+
+Run the following command to clone this repository, `cd` into it, and build the Docker images.
+
+```bash
+git clone https://github.com/rmorshea/docker-flask-template.git && \
+cd docker-flask-template && \
+docker-compose build
+```
+
+# Run The Application
 
 Set up your environment variables (be sure to change these later):
 
 ```bash
+# whether or not to run the application in debug mode.
 export FLASK_DEBUG=1
+# the password for the postgresql user "docker".
 export POSTGRES_PASSWORD=secret
+# a secret used to cryptographically sign access tokens.
 export JWT_SECRET_KEY=secret
+# the password of the application's "root" user.
 export ROOT_USER_PASSWORD=secret
 ```
 
-Run the application (images will take time to download the first time):
+Run the application:
 
 ```bash
 docker-compose up

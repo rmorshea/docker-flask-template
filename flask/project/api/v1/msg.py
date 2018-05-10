@@ -16,10 +16,10 @@ class Status(HTTPException):
         if code is not None:
             cls.code = code
 
-    def __init__(self, reason, **data):
-        data['reason'] = reason
+    def __init__(self, msg, **data):
+        data['msg'] = msg
         self.data = data
-        super().__init__(reason)
+        super().__init__(msg)
 
     def json(self):
         response = jsonify(self.data)
